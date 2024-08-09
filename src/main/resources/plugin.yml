@@ -1,0 +1,4 @@
+name: OraxenHostingService
+version: '${project.version}'
+main: com.bilicraft.oraxenhostingservice.OraxenHostingService
+api-version: '1.20'
