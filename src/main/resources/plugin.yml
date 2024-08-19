@@ -4,5 +4,11 @@ author: BigBrother
 main: com.bilicraft.oraxenhostingservice.OraxenHostingService
 api-version: '1.20'
 depend: [Oraxen]
-libraries:
-  - com.qcloud:cos_api:5.6.229
+commands:
+  reloadconfig:
+    description: 重载插件的配置文件
+    usage: 使用 /ohs reload 重载配置文件
+    aliases: [ ohs ]
+    permission: ohs.command.reload
+#libraries:
+#  - com.qcloud:cos_api:5.6.229
