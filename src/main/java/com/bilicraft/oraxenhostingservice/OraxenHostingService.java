@@ -1,8 +1,10 @@
 package com.bilicraft.oraxenhostingservice;
 
+import com.bilicraft.oraxenhostingservice.command.CommandReload;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public final class OraxenHostingService extends JavaPlugin {
@@ -12,13 +14,15 @@ public final class OraxenHostingService extends JavaPlugin {
     @Override
     public void onEnable() {
         // Plugin startup logic
-        // 获取logger
+        // 初始化变量
         logger = getLogger();
         // 生成配置文件
         saveResource("config.yml", /* replace */ false);
         // 获取配置文件
         config = this.getConfig();
         logger.info("加载配置文件成功！");
+        // 注册指令
+        Objects.requireNonNull(this.getCommand("reloadconfig")).setExecutor(new CommandReload(this));
     }
 
     @Override

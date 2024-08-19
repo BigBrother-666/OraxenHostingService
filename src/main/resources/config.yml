@@ -1,10 +1,15 @@
+# 使用 /ohs reload重载配置文件
+# 该命令需要权限：ohs.command.reload
+# 重载后，必须重新上传oraxen资源包
+
+# 腾讯云对象存储
 tencentCos:
   secret-id:
   secret-key:
   # bucket的地域
-  region-name: ap-shanghai
+  region-name:
   # bucket名
-  bucket-name: bili-oraxen-pack-1309360946
+  bucket-name:
   # 下载链接有效期（分钟）
   expire-time: 30
   # 资源包在bucket的存储路径

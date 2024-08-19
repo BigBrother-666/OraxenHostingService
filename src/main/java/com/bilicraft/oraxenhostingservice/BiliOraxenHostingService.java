@@ -9,38 +9,34 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
-public class BiliHostingService implements HostingProvider {
+public class BiliOraxenHostingService implements HostingProvider {
     private String sha1;
     private UUID packUUID;
 
-    private final String bucketName;
-    private final String key;
-    private final Long expireTime;
-    private final TencentCosClient tencentCosClient;
+    private String bucketName;
+    private String key;
+    private Long expireTime;
+    private TencentCosClient tencentCosClient;
 
-    public BiliHostingService() {
-        String secretId = OraxenHostingService.config.getString("secret-id");
-        String secretKey = OraxenHostingService.config.getString("secret-key");
-        String regionName = OraxenHostingService.config.getString("region-name");
-        if (secretId == null || secretId.trim().isEmpty()) {
-            secretId = System.getenv("SECRET_ID");
-        } else {
-            OraxenHostingService.logger.warning("secret-id获取失败");
-        }
-        if (secretKey == null || secretKey.trim().isEmpty()) {
-            secretKey = System.getenv("secret-key");
-        } else {
-            OraxenHostingService.logger.warning("secret-key获取失败");
-        }
+    public BiliOraxenHostingService() {
+        getConfig();
+    }
 
-        bucketName = OraxenHostingService.config.getString("bucket-name");
-        key = OraxenHostingService.config.getString("key");
-        expireTime = OraxenHostingService.config.getLong("expire-time");
+    private void getConfig(){
+        String secretId = OraxenHostingService.config.getString("tencentCos.secret-id");
+        String secretKey = OraxenHostingService.config.getString("tencentCos.secret-key");
+        String regionName = OraxenHostingService.config.getString("tencentCos.region-name");
+
+        bucketName = OraxenHostingService.config.getString("tencentCos.bucket-name");
+        key = OraxenHostingService.config.getString("tencentCos.key");
+        expireTime = OraxenHostingService.config.getLong("tencentCos.expire-time");
         tencentCosClient = new TencentCosClient(secretId, secretKey, regionName);
     }
 
     @Override
     public boolean uploadPack(File file) {
+        // 保证重载ohs后，oraxen按照新配置上传
+        getConfig();
         tencentCosClient.uploadFile(file, bucketName, key);
         sha1 = getFileSHA1(file);
         if (sha1 != null) {
