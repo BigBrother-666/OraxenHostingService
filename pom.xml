@@ -51,17 +51,17 @@
 
     <repositories>
         <repository>
-            <id>oraxen</id>
-            <name>Oraxen Repository</name>
-            <url>https://repo.oraxen.com/releases</url>
-        </repository>
-        <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+                <repository>
+            <id>oraxen</id>
+            <name>Oraxen Repository</name>
+            <url>https://repo.oraxen.com/releases</url>
         </repository>
     </repositories>
 
@@ -122,6 +122,13 @@
                     <artifactId>java</artifactId>
                 </exclusion>
             </exclusions>
+            <scope>provided</scope>
+        </dependency>
+        <!--        腾讯云COS SDK-->
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+            <version>5.6.229</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

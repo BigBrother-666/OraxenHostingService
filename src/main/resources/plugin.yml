@@ -1,4 +1,8 @@
 name: OraxenHostingService
 version: '${project.version}'
+author: BigBrother
 main: com.bilicraft.oraxenhostingservice.OraxenHostingService
 api-version: '1.20'
+depend: [Oraxen]
+libraries:
+  - com.qcloud:cos_api:5.6.229

@@ -1,0 +1,11 @@
+tencentCos:
+  secret-id:
+  secret-key:
+  # bucket的地域
+  region-name: ap-shanghai
+  # bucket名
+  bucket-name: bili-oraxen-pack-1309360946
+  # 下载链接有效期（分钟）
+  expire-time: 30
+  # 资源包在bucket的存储路径
+  key: bili_oraxen_pack/pack.zip
