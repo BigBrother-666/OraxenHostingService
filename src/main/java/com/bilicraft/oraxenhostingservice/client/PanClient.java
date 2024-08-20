@@ -10,8 +10,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class PanClient implements Client {
     //    private final String CLIENT_ID = OraxenHostingService.config.getString("pan.client-id");
@@ -19,15 +18,20 @@ public class PanClient implements Client {
     private final String clientId = "";
     private final String clientSecret = "";
     private final Integer parentFileId = 8187024;
+    private Integer fileId = null;
     private String accessToken = null;
 
-    //    private static final String BASE_URL = OraxenHostingService.config.getString("pan.base-url");
+//    private static final String BASE_URL = OraxenHostingService.config.getString("pan.base-url");
     private final String BASE_URL = "https://open-api.123pan.com";
     private final String ACCESS_TOKEN_URL = BASE_URL + "/api/v1/access_token";
     private final String CREATE_DIR_URL = BASE_URL + "/upload/v1/file/mkdir";
     private final String CREATE_FILE_URL = BASE_URL + "/upload/v1/file/create";
     private final String GET_UPLOAD_URL = BASE_URL + "/upload/v1/file/get_upload_url";
     private final String CHECK_COMPLETE_URL = BASE_URL + "/upload/v1/file/upload_complete";
+    private final String GET_FILE_LIST_URL = BASE_URL + "/api/v2/file/list";
+    private final String CHECK_COMPLETE_ASYNC_URL = BASE_URL + "/upload/v1/file/upload_async_result";
+    private final String TRASH_URL = BASE_URL + "/api/v1/file/trash";
+    private final String DELETE_URL = BASE_URL + "/api/v1/file/delete";
 
     private final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     private final MediaType MEDIA_TYPE_OCTET_STREAM = MediaType.parse("application/octet-stream");
@@ -74,28 +78,94 @@ public class PanClient implements Client {
         }
         OkHttpClient client = new OkHttpClient();
         ObjectMapper objectMapper = new ObjectMapper();
-        // 构造json
-        Map<String, Object> jsonObject = new HashMap<>();
-        jsonObject.put("parentFileID", parentFileId);
-        jsonObject.put("filename", localFile.getName());
-        jsonObject.put("etag", getFileMD5(localFile));
-        jsonObject.put("size", localFile.length());
         try {
-            // 构造body
-            RequestBody body = RequestBody.create(MEDIA_TYPE_JSON, objectMapper.writeValueAsString(jsonObject));
-            // 构造请求
+            // --------------------------- 查找是否有同名资源包 ---------------------------
+            HttpUrl.Builder urlBuilder = HttpUrl.parse(GET_FILE_LIST_URL).newBuilder();
+            urlBuilder.addQueryParameter("parentFileId", parentFileId.toString());
+            urlBuilder.addQueryParameter("limit", "100");
             Request request = new Request.Builder()
-                    .url(CREATE_FILE_URL)
+                    .url(urlBuilder.build())
                     .addHeader("Platform", "open_platform")
                     .addHeader("Authorization", "Bearer " + accessToken)
-                    .post(body)
+                    .get()
                     .build();
             Response response = client.newCall(request).execute();
             if (response.isSuccessful()) {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code == 0) {
+                    ArrayList<LinkedHashMap<String, Object>> fileList = (ArrayList<LinkedHashMap<String, Object>>) panEntity.data.get("fileList");
+                    for (LinkedHashMap<String, Object> file : fileList) {
+                        if (Objects.equals(file.get("filename"), localFile.getName()) && (Integer) file.get("trashed") == 0) {
+                            fileId = (Integer) file.get("fileId");
+                            break;
+                        }
+                    }
+                } else {
+                    OraxenHostingService.logger.warning("查询远程资源包失败：" + panEntity.message);
+                }
+            } else {
+                OraxenHostingService.logger.warning(CREATE_FILE_URL + "请求失败：" + response.code());
+            }
+
+            // --------------------------- 如果有，彻底删除同名资源包 ---------------------------
+            if (fileId != null) {
+                Map<String, Object> jsonObject = new HashMap<>();
+                jsonObject.put("fileIDs", new int[]{fileId});
+                RequestBody body = RequestBody.create(MEDIA_TYPE_JSON, objectMapper.writeValueAsString(jsonObject));
+                request = new Request.Builder()
+                        .url(TRASH_URL)
+                        .addHeader("Platform", "open_platform")
+                        .addHeader("Authorization", "Bearer " + accessToken)
+                        .post(body)
+                        .build();
+                response = client.newCall(request).execute();
+                // 放入回收站
+                if (response.isSuccessful()) {
+                    PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
+                    if (panEntity.code != 0) {
+                        System.out.println("删除旧资源包失败：" + panEntity.message);
+                    }
+                } else {
+                    OraxenHostingService.logger.warning(CREATE_FILE_URL + "请求失败：" + response.code());
+                }
+                // 彻底删除
+                request = new Request.Builder()
+                        .url(DELETE_URL)
+                        .addHeader("Platform", "open_platform")
+                        .addHeader("Authorization", "Bearer " + accessToken)
+                        .post(body)
+                        .build();
+                response = client.newCall(request).execute();
+                if (response.isSuccessful()) {
+                    PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
+                    if (panEntity.code == 0) {
+                        System.out.println("删除旧资源包成功！");
+                    } else {
+                        System.out.println("删除旧资源包失败：" + panEntity.message);
+                    }
+                } else {
+                    OraxenHostingService.logger.warning(DELETE_URL + "请求失败：" + response.code());
+                }
+            }
+            // --------------------------- 远程创建资源包 ---------------------------
+            Map<String, Object> jsonObject = new HashMap<>();
+            jsonObject.put("parentFileID", parentFileId);
+            jsonObject.put("filename", localFile.getName());
+            jsonObject.put("etag", getFileMD5(localFile));
+            jsonObject.put("size", localFile.length());
+            RequestBody body = RequestBody.create(MEDIA_TYPE_JSON, objectMapper.writeValueAsString(jsonObject));
+            request = new Request.Builder()
+                    .url(CREATE_FILE_URL)
+                    .addHeader("Platform", "open_platform")
+                    .addHeader("Authorization", "Bearer " + accessToken)
+                    .post(body)
+                    .build();
+            response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
+                if (panEntity.code == 0) {
                     if ((Boolean)panEntity.data.get("reuse")){
-                        System.out.println("文件秒传成功");
+                        System.out.println("资源包秒传成功");
                     } else {
                         // 分块上传
                         sliceUpload(localFile,
@@ -103,7 +173,7 @@ public class PanClient implements Client {
                                 (Integer) panEntity.data.get("sliceSize"));
                     }
                 } else {
-                    System.out.println("创建文件失败：" + panEntity.message);
+                    System.out.println("创建资源包失败：" + panEntity.message);
                 }
             } else {
                 OraxenHostingService.logger.warning(CREATE_FILE_URL + "请求失败：" + response.code());
@@ -111,7 +181,7 @@ public class PanClient implements Client {
         } catch (JsonProcessingException e) {
             OraxenHostingService.logger.warning("解析json时出错：" + e);
         } catch (IOException e) {
-            OraxenHostingService.logger.warning("创建文件时发生错误：" + e);
+            OraxenHostingService.logger.warning("远程创建资源包时发生错误：" + e);
         }
     }
 
@@ -123,11 +193,15 @@ public class PanClient implements Client {
         return "";
     }
 
+    private void deleteFile() {
+
+    }
+
     private String getFileMD5(File file) {
         try {
             // 创建MessageDigest实例，用于计算MD5
             MessageDigest digest = MessageDigest.getInstance("MD5");
-            // 读取文件内容并更新到MessageDigest
+            // 读取资源包内容并更新到MessageDigest
             try (FileInputStream fis = new FileInputStream(file)) {
                 byte[] byteArray = new byte[1024];
                 int bytesRead;
@@ -144,19 +218,19 @@ public class PanClient implements Client {
             }
             return sb.toString();
         } catch (Exception e) {
-            OraxenHostingService.logger.warning("计算文件md5时发生错误：" + e);
+            OraxenHostingService.logger.warning("计算资源包md5时发生错误：" + e);
         }
         return null;
     }
 
     /**
-     * 分片上传文件
-     * @param file 文件
+     * 分片上传资源包
+     * @param file 资源包
      * @param preuploadID 预上传ID
      * @param sliceSize 分片大小（Byte）
      */
     private void sliceUpload(File file, String preuploadID, Integer sliceSize) {
-        // 获取文件的总字节数
+        // 获取资源包的总字节数
         long fileSize = file.length();
         // 计算总的分片数
         int totalSlices = (int) Math.ceil((double) fileSize / sliceSize);
@@ -166,7 +240,7 @@ public class PanClient implements Client {
             int bytesRead;
             // 分片索引
             int sliceIndex = 1;
-            // 循环读取文件并上传每个分片
+            // 循环读取资源包并上传每个分片
             while ((bytesRead = fis.read(buffer)) != -1) {
                 // 如果读取的字节数小于缓冲区大小，则需要调整缓冲区大小
                 if (bytesRead < sliceSize) {
@@ -182,7 +256,7 @@ public class PanClient implements Client {
             // 检查上传是否完成
             checkUploadSuccess(preuploadID);
         } catch (IOException e) {
-            e.printStackTrace();
+            OraxenHostingService.logger.warning("资源包分片时发生错误：" + e);
         }
     }
 
@@ -224,14 +298,13 @@ public class PanClient implements Client {
                 .put(body)
                 .build();
             response = client.newCall(request).execute();
-            System.out.println("upload resp -> " + response.body().string());
             if (!response.isSuccessful()) {
                 OraxenHostingService.logger.warning(presignedURL + "请求失败：" + response.code());
             }
         } catch (JsonProcessingException e) {
             OraxenHostingService.logger.warning("解析json时出错：" + e);
         } catch (IOException e) {
-            OraxenHostingService.logger.warning("分片上传文件时发生错误：" + e);
+            OraxenHostingService.logger.warning("分片上传资源包时发生错误：" + e);
         }
     }
 
@@ -254,22 +327,72 @@ public class PanClient implements Client {
                     .post(body)
                     .build();
             Response response = client.newCall(request).execute();
-            System.out.println("check resp -> " + response.body().string());
+            PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
             if (!response.isSuccessful()) {
                 OraxenHostingService.logger.warning(GET_UPLOAD_URL + "请求失败：" + response.code());
                 return;
+            } else if (panEntity.code == 0) {
+                if((Boolean) panEntity.data.get("completed")){
+                    fileId = (Integer) panEntity.data.get("fileID");
+                    System.out.println("上传资源包到网盘成功！");
+                } else {
+                    // 资源包还未上传完成，需要异步查询
+                    checkUploadSuccessAsync(preuploadID);
+                }
+            } else {
+                OraxenHostingService.logger.warning("分片上传资源包失败：" + panEntity.message);
             }
-
         } catch (JsonProcessingException e) {
             OraxenHostingService.logger.warning("解析json时出错：" + e);
         } catch (IOException e) {
-            OraxenHostingService.logger.warning("分片上传文件时发生错误：" + e);
+            OraxenHostingService.logger.warning("分片上传资源包时发生错误：" + e);
+        }
+    }
+
+    private void checkUploadSuccessAsync(String preuploadID) {
+        OkHttpClient client = new OkHttpClient();
+        ObjectMapper objectMapper = new ObjectMapper();
+        // 构造json
+        Map<String, Object> jsonObject = new HashMap<>();
+        jsonObject.put("preuploadID", preuploadID);
+        try {
+            RequestBody body = RequestBody.create(MEDIA_TYPE_JSON, objectMapper.writeValueAsString(jsonObject));
+            Request request = new Request.Builder()
+                    .url(CHECK_COMPLETE_ASYNC_URL)
+                    .addHeader("Platform", "open_platform")
+                    .addHeader("Authorization", "Bearer " + accessToken)
+                    .post(body)
+                    .build();
+            // 最大轮询次数
+//            int maxCnt = OraxenHostingService.config.getInt("pan.upload-time-out");
+            int maxCnt = 10;
+            while (maxCnt > 0){
+                Response response = client.newCall(request).execute();
+                PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
+                if(panEntity.code == 0 && (Boolean) panEntity.data.get("completed")){
+                    fileId = (Integer) panEntity.data.get("fileID");
+                    System.out.println("上传资源包到网盘成功！");
+                    break;
+                } else {
+                    // 资源包还未上传完成，继续轮询
+                    Thread.sleep(1000);
+                }
+                maxCnt--;
+            }
+            if (maxCnt == 0) {
+                OraxenHostingService.logger.warning("上传资源包超时");
+            }
+        } catch (JsonProcessingException e) {
+            OraxenHostingService.logger.warning("解析json时出错：" + e);
+        } catch (IOException | InterruptedException e) {
+            OraxenHostingService.logger.warning("异步检查上传结果时发生错误：" + e);
         }
     }
 
     public static void main(String[] args) {
         PanClient client = new PanClient();
         client.getAccessToken();
-        client.uploadFile(new File("/home/dyh/IdeaProjects/OraxenHostingService/pack.zip"));
+//        client.uploadFile(new File("E:\\minecraft-servers\\paper-1.20.4\\plugins\\Oraxen\\pack\\pack.zip"));
+        client.uploadFile(new File("C:\\Users\\23616\\Desktop\\pack.zip"));
     }
 }

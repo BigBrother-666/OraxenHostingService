@@ -12,6 +12,8 @@ pan:
   client-secret:
   # 保存材质包的文件夹id
   parent-file-id: 8187024
+  # 最大上传时间（秒）
+  upload-time-out: 10
 
 # 腾讯云对象存储
 tencent-cos:
