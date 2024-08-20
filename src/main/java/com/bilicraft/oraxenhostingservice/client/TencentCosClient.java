@@ -1,5 +1,6 @@
-package com.bilicraft.oraxenhostingservice;
+package com.bilicraft.oraxenhostingservice.client;
 
+import com.bilicraft.oraxenhostingservice.OraxenHostingService;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
@@ -16,31 +17,43 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TencentCosClient {
-    private final COSClient cosClient;
+public class TencentCosClient implements Client {
+    private COSClient cosClient;
+    // 存储桶名称 BucketName-APPID
+    private final String bucketName = OraxenHostingService.config.getString("tencent-cos.bucket-name");
+    // 对象键，对象在存储桶中的唯一标识
+    private final String key = OraxenHostingService.config.getString("tencent-cos.key");
+    // 链接过期时间（分钟）
+    private final Long expireTime = OraxenHostingService.config.getLong("tencent-cos.expire-time");
 
-    /**
-     * @param secretId   用户secretId
-     * @param secretKey  用户secretKey
-     * @param regionName bucket的地域
-     */
-    public TencentCosClient(String secretId, String secretKey, String regionName) {
-        COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
-        Region region = new Region(regionName);
-        ClientConfig clientConfig = new ClientConfig(region);
-        clientConfig.setHttpProtocol(HttpProtocol.https);
-        // 生成 cos 客户端。
-        this.cosClient = new COSClient(cred, clientConfig);
+    public TencentCosClient() {
+        // 用户secretId
+        String secretId = OraxenHostingService.config.getString("tencent-cos.secret-id");
+        // 用户secretKey
+        String secretKey = OraxenHostingService.config.getString("tencent-cos.secret-key");
+        // bucket的地域
+        String regionName = OraxenHostingService.config.getString("tencent-cos.region-name");
+
+        COSCredentials cred;
+        if (secretId != null && secretKey != null) {
+            cred = new BasicCOSCredentials(secretId, secretKey);
+            Region region = new Region(regionName);
+            ClientConfig clientConfig = new ClientConfig(region);
+            clientConfig.setHttpProtocol(HttpProtocol.https);
+            // 生成 cos 客户端。
+            this.cosClient = new COSClient(cred, clientConfig);
+        } else {
+            OraxenHostingService.logger.warning("secretId 或 secretKey 为空");
+        }
     }
 
     /**
      * 上传文件到COS
      *
      * @param localFile  要上传的文件
-     * @param bucketName 指定文件将要存放的存储桶，存储桶的命名格式为 BucketName-APPID
-     * @param key       指定文件上传到 COS 上的路径（对象键）
      */
-    public void uploadFile(File localFile, String bucketName, String key) {
+    @Override
+    public void uploadFile(File localFile) {
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, localFile);
         PutObjectResult putObjectResult = cosClient.putObject(putObjectRequest);
     }
@@ -48,12 +61,10 @@ public class TencentCosClient {
     /**
      * 获取文件临时直链链接
      *
-     * @param bucketName 存储桶的命名格式为 BucketName-APPID
-     * @param key        对象键，对象在存储桶中的唯一标识
-     * @param expireTime 链接过期时间（分钟）
      * @return 直链链接
      */
-    public String getObjectUrl(String bucketName, String key, long expireTime) {
+    @Override
+    public String getFileUrl() {
         // 设置签名过期时间(可选), 若未进行设置则默认使用 ClientConfig 中的签名过期时间(1小时)
         // 这里设置签名在半个小时后过期
         Date expirationDate = new Date(System.currentTimeMillis() + expireTime * 60 * 1000);
