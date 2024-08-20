@@ -2,8 +2,19 @@
 # 该命令需要权限：ohs.command.reload
 # 重载后，必须重新上传oraxen资源包
 
+# 使用哪种存储 pan / tencent-cos
+client: pan
+
+# 123云盘
+pan:
+  base-url: https://open-api.123pan.com
+  client-id:
+  client-secret:
+  # 保存材质包的文件夹id
+  parent-file-id: 8187024
+
 # 腾讯云对象存储
-tencentCos:
+tencent-cos:
   secret-id:
   secret-key:
   # bucket的地域
