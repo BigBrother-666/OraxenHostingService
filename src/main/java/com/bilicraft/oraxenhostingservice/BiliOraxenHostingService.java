@@ -1,5 +1,8 @@
 package com.bilicraft.oraxenhostingservice;
 
+import com.bilicraft.oraxenhostingservice.client.Client;
+import com.bilicraft.oraxenhostingservice.client.PanClient;
+import com.bilicraft.oraxenhostingservice.client.TencentCosClient;
 import io.th0rgal.oraxen.pack.upload.hosts.HostingProvider;
 
 import java.io.File;
@@ -10,34 +13,31 @@ import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 public class BiliOraxenHostingService implements HostingProvider {
+    private Client client;
     private String sha1;
     private UUID packUUID;
 
-    private String bucketName;
-    private String key;
-    private Long expireTime;
-    private TencentCosClient tencentCosClient;
 
     public BiliOraxenHostingService() {
         getConfig();
     }
 
     private void getConfig(){
-        String secretId = OraxenHostingService.config.getString("tencentCos.secret-id");
-        String secretKey = OraxenHostingService.config.getString("tencentCos.secret-key");
-        String regionName = OraxenHostingService.config.getString("tencentCos.region-name");
-
-        bucketName = OraxenHostingService.config.getString("tencentCos.bucket-name");
-        key = OraxenHostingService.config.getString("tencentCos.key");
-        expireTime = OraxenHostingService.config.getLong("tencentCos.expire-time");
-        tencentCosClient = new TencentCosClient(secretId, secretKey, regionName);
+        String selectClient = OraxenHostingService.config.getString("client");
+        if (selectClient != null && selectClient.equals("pan")){
+            client = new PanClient();
+        } else if (selectClient != null && selectClient.equals("tencent-cos")){
+            client = new TencentCosClient();
+        } else {
+            OraxenHostingService.logger.warning("client配置错误");
+        }
     }
 
     @Override
     public boolean uploadPack(File file) {
         // 保证重载ohs后，oraxen按照新配置上传
         getConfig();
-        tencentCosClient.uploadFile(file, bucketName, key);
+        client.uploadFile(file);
         sha1 = getFileSHA1(file);
         if (sha1 != null) {
             packUUID = UUID.nameUUIDFromBytes(sha1.getBytes());
@@ -49,12 +49,12 @@ public class BiliOraxenHostingService implements HostingProvider {
 
     @Override
     public String getPackURL() {
-        return tencentCosClient.getObjectUrl(bucketName, key, expireTime);
+        return client.getFileUrl();
     }
 
     @Override
     public String getMinecraftPackURL() {
-        return tencentCosClient.getObjectUrl(bucketName, key, expireTime);
+        return client.getFileUrl();
     }
 
     @Override
