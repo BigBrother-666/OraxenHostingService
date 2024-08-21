@@ -21,7 +21,7 @@ public class PanClient implements Client {
 
     private static final String BASE_URL = OraxenHostingService.config.getString("pan.base-url");
     private final String ACCESS_TOKEN_URL = BASE_URL + "/api/v1/access_token";
-    private final String CREATE_DIR_URL = BASE_URL + "/upload/v1/file/mkdir";
+//    private final String CREATE_DIR_URL = BASE_URL + "/upload/v1/file/mkdir";
     private final String CREATE_FILE_URL = BASE_URL + "/upload/v1/file/create";
     private final String GET_UPLOAD_URL = BASE_URL + "/upload/v1/file/get_upload_url";
     private final String CHECK_COMPLETE_URL = BASE_URL + "/upload/v1/file/upload_complete";
@@ -286,11 +286,6 @@ public class PanClient implements Client {
      * @param sliceSize   分片大小（Byte）
      */
     private void sliceUpload(File file, String preuploadID, Integer sliceSize) {
-        // 获取资源包的总字节数
-        long fileSize = file.length();
-        // 计算总的分片数
-        int totalSlices = (int) Math.ceil((double) fileSize / sliceSize);
-
         try (FileInputStream fis = new FileInputStream(file)) {
             byte[] buffer = new byte[sliceSize];
             int bytesRead;
