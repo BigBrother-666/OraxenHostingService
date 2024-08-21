@@ -15,7 +15,7 @@ import java.util.*;
 public class PanClient implements Client {
     private final String clientId = OraxenHostingService.config.getString("pan.client-id");
     private final String clientSecret = OraxenHostingService.config.getString("pan.client-secret");
-    private final Integer parentFileId = 8187024;
+    private final Integer parentFileId = OraxenHostingService.config.getInt("pan.parent-file-id");;
     private Integer fileId = null;
     private String accessToken = null;
 
