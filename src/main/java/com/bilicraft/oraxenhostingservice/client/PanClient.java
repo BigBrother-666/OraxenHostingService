@@ -158,7 +158,7 @@ public class PanClient implements Client {
     }
 
     /**
-     * 删除网盘中的资源包
+     * 删除云盘中的资源包
      */
     private void deleteFile() {
         OkHttpClient client = new OkHttpClient();
@@ -211,9 +211,9 @@ public class PanClient implements Client {
     }
 
     /**
-     * 查询网盘资源包信息
+     * 查询云盘资源包信息
      *
-     * @param fileName 网盘资源包文件名
+     * @param fileName 云盘资源包文件名
      */
     private void getFileId(String fileName) {
         OkHttpClient client = new OkHttpClient();
@@ -248,7 +248,7 @@ public class PanClient implements Client {
         } catch (JsonProcessingException e) {
             OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("获取网盘资源包信息时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.warn("获取云盘资源包信息时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -386,7 +386,7 @@ public class PanClient implements Client {
             } else if (panEntity.code == 0) {
                 if ((Boolean) panEntity.data.get("completed")) {
                     fileId = (Integer) panEntity.data.get("fileID");
-                    OraxenHostingService.logger.info("成功上传资源包到网盘");
+                    OraxenHostingService.logger.info("成功上传资源包到云盘");
                 } else {
                     // 资源包还未上传完成，需要异步查询
                     checkUploadSuccessAsync(preuploadID);
@@ -422,7 +422,7 @@ public class PanClient implements Client {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code == 0 && (Boolean) panEntity.data.get("completed")) {
                     fileId = (Integer) panEntity.data.get("fileID");
-                    OraxenHostingService.logger.info("成功上传资源包到网盘");
+                    OraxenHostingService.logger.info("成功上传资源包到云盘");
                     break;
                 } else {
                     // 资源包还未上传完成，继续轮询
