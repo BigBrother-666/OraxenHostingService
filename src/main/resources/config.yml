@@ -2,28 +2,31 @@
 # 该命令需要权限：ohs.command.reload
 # 重载后，必须重新上传oraxen资源包
 
-# 使用哪种存储 pan / tencent-cos
+# 使用哪种存储   pan / tencent-cos
 client: pan
 
 # 123云盘
 pan:
+  # 123云盘api地址，一般不改动
   base-url: https://open-api.123pan.com
+  # 前往 https://www.123pan.com/developer 申请123云盘OpenAPI来获取client-id和client-secret，需要123云盘会员
   client-id:
   client-secret:
-  # 保存材质包的文件夹id
-  parent-file-id: 8187024
-  # 最大上传时间（秒）
+  # 保存资源包的文件夹id，获取方法请查看readme
+  parent-file-id:
+  # 最大上传资源包时间（秒）
   upload-time-out: 10
 
 # 腾讯云对象存储
 tencent-cos:
+  # 腾讯云永久密钥
   secret-id:
   secret-key:
   # bucket的地域
   region-name:
   # bucket名
   bucket-name:
-  # 下载链接有效期（分钟）
+  # 直链下载链接有效期（分钟）
   expire-time: 30
-  # 资源包在bucket的存储路径
-  key: bili_oraxen_pack/pack.zip
+  # 资源包在bucket的存储路径（对象键）
+  key:
