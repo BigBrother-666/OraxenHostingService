@@ -1,21 +1,22 @@
 package com.bilicraft.oraxenhostingservice;
 
 import com.bilicraft.oraxenhostingservice.command.CommandReload;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.logging.Logger;
 
 public final class OraxenHostingService extends JavaPlugin {
     public static FileConfiguration config;
-    public static Logger logger;
+    public static ComponentLogger logger;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
         // 初始化变量
-        logger = getLogger();
+        logger = this.getComponentLogger();
         // 生成配置文件
         saveResource("config.yml", /* replace */ false);
         // 获取配置文件
