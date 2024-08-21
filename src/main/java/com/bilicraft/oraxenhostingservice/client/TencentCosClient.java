@@ -43,7 +43,7 @@ public class TencentCosClient implements Client {
             // 生成 cos 客户端。
             this.cosClient = new COSClient(cred, clientConfig);
         } else {
-            OraxenHostingService.logger.warning("secretId 或 secretKey 为空");
+            OraxenHostingService.logger.warn("secretId 或 secretKey 为空");
         }
     }
 
