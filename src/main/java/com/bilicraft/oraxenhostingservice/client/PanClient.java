@@ -54,16 +54,16 @@ public class PanClient implements Client {
             if (response.isSuccessful()) {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code != 0) {
-                    OraxenHostingService.logger.warn("获取AccessToken失败：{}", panEntity.message);
+                    OraxenHostingService.logger.error("获取AccessToken失败：{}", panEntity.message);
                 }
                 accessToken = (String) panEntity.data.get("accessToken");
             } else {
-                OraxenHostingService.logger.warn("{}请求失败：{}", ACCESS_TOKEN_URL, response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", ACCESS_TOKEN_URL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("获取AccessToken时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("获取AccessToken时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -110,15 +110,15 @@ public class PanClient implements Client {
                                 (Integer) panEntity.data.get("sliceSize"));
                     }
                 } else {
-                    OraxenHostingService.logger.warn("创建资源包失败：{}", panEntity.message);
+                    OraxenHostingService.logger.error("创建资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.warn("{}请求失败：{}", CREATE_FILE_URL, response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", CREATE_FILE_URL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("远程创建资源包时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("远程创建资源包时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -144,15 +144,15 @@ public class PanClient implements Client {
                 if (panEntity.code == 0) {
                     return (String) panEntity.data.get("url");
                 } else {
-                    OraxenHostingService.logger.warn("获取直链失败：{}", panEntity.message);
+                    OraxenHostingService.logger.error("获取直链失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.warn("{}请求失败：{}", urlBuilder.build(), response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", urlBuilder.build(), response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("获取直链时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("获取直链时发生错误：{}", String.valueOf(e));
         }
         return null;
     }
@@ -178,10 +178,10 @@ public class PanClient implements Client {
             if (response.isSuccessful()) {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code != 0) {
-                    OraxenHostingService.logger.warn("删除旧资源包失败：{}", panEntity.message);
+                    OraxenHostingService.logger.error("删除旧资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.warn("{}请求失败：{}", TRASH_URL, response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", TRASH_URL, response.code());
             }
             // 彻底删除
             request = new Request.Builder()
@@ -196,15 +196,15 @@ public class PanClient implements Client {
                 if (panEntity.code == 0) {
                     OraxenHostingService.logger.info("删除旧资源包成功");
                 } else {
-                    OraxenHostingService.logger.warn("删除旧资源包失败：{}", panEntity.message);
+                    OraxenHostingService.logger.error("删除旧资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.warn("{}请求失败：{}", DELETE_URL, response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", DELETE_URL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("删除文件时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("删除文件时发生错误：{}", String.valueOf(e));
         }
 
 
@@ -240,15 +240,15 @@ public class PanClient implements Client {
                         }
                     }
                 } else {
-                    OraxenHostingService.logger.warn("查询远程资源包失败：{}", panEntity.message);
+                    OraxenHostingService.logger.error("查询远程资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.warn("{}请求失败：{}", urlBuilder.build(), response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", urlBuilder.build(), response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("获取云盘资源包信息时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("获取云盘资源包信息时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -273,7 +273,7 @@ public class PanClient implements Client {
             }
             return sb.toString();
         } catch (Exception e) {
-            OraxenHostingService.logger.warn("计算资源包md5时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("计算资源包md5时发生错误：{}", String.valueOf(e));
         }
         return null;
     }
@@ -307,7 +307,7 @@ public class PanClient implements Client {
             // 检查上传是否完成
             checkUploadSuccess(preuploadID);
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("资源包分片时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("资源包分片时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -336,7 +336,7 @@ public class PanClient implements Client {
                     .build();
             Response response = client.newCall(request).execute();
             if (!response.isSuccessful()) {
-                OraxenHostingService.logger.warn("{}请求失败：{}", GET_UPLOAD_URL, response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", GET_UPLOAD_URL, response.code());
                 return;
             }
             PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
@@ -351,12 +351,12 @@ public class PanClient implements Client {
                     .build();
             response = client.newCall(request).execute();
             if (!response.isSuccessful()) {
-                OraxenHostingService.logger.warn("{}请求失败：{}", presignedURL, response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", presignedURL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("分片上传资源包时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("分片上传资源包时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -382,7 +382,7 @@ public class PanClient implements Client {
             Response response = client.newCall(request).execute();
             PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
             if (!response.isSuccessful()) {
-                OraxenHostingService.logger.warn("{}请求失败：{}", CHECK_COMPLETE_URL, response.code());
+                OraxenHostingService.logger.error("{}请求失败：{}", CHECK_COMPLETE_URL, response.code());
             } else if (panEntity.code == 0) {
                 if ((Boolean) panEntity.data.get("completed")) {
                     fileId = (Integer) panEntity.data.get("fileID");
@@ -392,12 +392,12 @@ public class PanClient implements Client {
                     checkUploadSuccessAsync(preuploadID);
                 }
             } else {
-                OraxenHostingService.logger.warn("分片上传资源包失败：{}", panEntity.message);
+                OraxenHostingService.logger.error("分片上传资源包失败：{}", panEntity.message);
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.warn("检查上传结果时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("检查上传结果时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -434,9 +434,9 @@ public class PanClient implements Client {
                 OraxenHostingService.logger.warn("上传资源包超时");
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.warn("解析json时出错：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException | InterruptedException e) {
-            OraxenHostingService.logger.warn("异步检查上传结果时发生错误：{}", String.valueOf(e));
+            OraxenHostingService.logger.error("异步检查上传结果时发生错误：{}", String.valueOf(e));
         }
     }
 }

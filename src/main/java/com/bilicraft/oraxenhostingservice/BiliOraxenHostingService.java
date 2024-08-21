@@ -29,7 +29,7 @@ public class BiliOraxenHostingService implements HostingProvider {
         } else if (selectClient != null && selectClient.equals("tencent-cos")){
             client = new TencentCosClient();
         } else {
-            OraxenHostingService.logger.warn("client配置错误");
+            OraxenHostingService.logger.error("client配置错误");
         }
     }
 
@@ -101,8 +101,8 @@ public class BiliOraxenHostingService implements HostingProvider {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException | IOException e) {
-            OraxenHostingService.logger.warn("计算资源包sha1失败！");
-            OraxenHostingService.logger.warn(e.toString());
+            OraxenHostingService.logger.error("计算资源包sha1失败！");
+            OraxenHostingService.logger.error(e.toString());
             return null;
         }
     }
