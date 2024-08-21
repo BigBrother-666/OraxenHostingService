@@ -28,5 +28,5 @@ tencent-cos:
   bucket-name:
   # 直链下载链接有效期（分钟）
   expire-time: 30
-  # 资源包在bucket的存储路径（对象键）
+  # 资源包在bucket的存储路径（对象键）,例：bili_oraxen_pack/pack.zip
   key:
