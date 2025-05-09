@@ -18,6 +18,7 @@ public class CommandReload implements CommandExecutor {
         if (args.length > 0 && args[0].equals("reload")) {    // 重载插件的配置文件
             if (!commandSender.hasPermission("ohs.command.reload")){
                 commandSender.sendMessage("您没有权限执行此命令！");
+                return false;
             }
             plugin.reloadConfig();
             OraxenHostingService.config = plugin.getConfig();
