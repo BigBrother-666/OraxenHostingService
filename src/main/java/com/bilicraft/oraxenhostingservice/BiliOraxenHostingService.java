@@ -53,11 +53,6 @@ public class BiliOraxenHostingService implements HostingProvider {
     }
 
     @Override
-    public String getMinecraftPackURL() {
-        return client.getFileUrl();
-    }
-
-    @Override
     public byte[] getSHA1() {
         int len = this.sha1.length();
         byte[] data = new byte[len / 2];
