@@ -4,7 +4,7 @@ import java.io.File;
 
 public abstract class StorageProvider {
 
-    private String providerName;
+    private final String providerName;
     private String cachedUrl;
     private long expireAt;
     private final long urlExpireMinutes;
