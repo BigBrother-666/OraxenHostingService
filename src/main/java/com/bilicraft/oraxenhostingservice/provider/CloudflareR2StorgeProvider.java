@@ -37,7 +37,7 @@ public class CloudflareR2StorgeProvider extends StorageProvider {
         return r2Client.generatePresignedDownloadUrl(
                 bucketName,
                 objectKey,
-                Duration.ofSeconds(60)
+                Duration.ofMinutes(this.getUrlExpireMinutes())
         );
     }
 }
