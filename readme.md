@@ -1,6 +1,8 @@
 # OraxenHostingService
 ## 1. 简介
-Oraxen资源包自定义托管服务，目前支持123云盘和腾讯云对象存储服务。
+Oraxen资源包自定义托管服务，支持123云盘、腾讯云对象存储服务、Cloudflare R2对象存储服务。
+可以同时开启多个服务，玩家加入游戏请求资源包时，如果请求第一个存储服务失败后，会请求下一个存储服务，以此类推。
+配置文件中的顺序决定请求顺序。
 
 ## 2. 插件配置
 ### 2.1 pan.parent-file-id 配置项配置方法
@@ -10,7 +12,7 @@ Oraxen资源包自定义托管服务，目前支持123云盘和腾讯云对象�
 
 **使用123云盘存放资源包时，务必开启对应文件夹的直链空间功能！！！**
 
-其他请查看配置文件内注释。
+腾讯云对象存储服务、Cloudflare R2对象存储服务的配置方法类似，请查看配置文件内注释。
 ### 2.2 oraxen配置
 1. 在`settings.xml`中插入新配置项`Pack.upload.options.class`，填入材质包托管服务类路径`com.bilicraft.oraxenhostingservice.BiliOraxenHostingService`。
 2. 修改`settings.xml/Pack.upload.type`为`external`。
