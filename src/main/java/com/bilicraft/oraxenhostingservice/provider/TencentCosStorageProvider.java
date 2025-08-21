@@ -1,6 +1,7 @@
-package com.bilicraft.oraxenhostingservice.client;
+package com.bilicraft.oraxenhostingservice.provider;
 
 import com.bilicraft.oraxenhostingservice.OraxenHostingService;
+import com.bilicraft.oraxenhostingservice.Utils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
@@ -17,22 +18,24 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TencentCosClient implements Client {
-    private COSClient cosClient;
+public class TencentCosStorageProvider extends StorageProvider {
+    private COSClient cosStorageProvider;
     // 存储桶名称 BucketName-APPID
-    private final String bucketName = OraxenHostingService.config.getString("tencent-cos.bucket-name");
+    private final String bucketName;
     // 对象键，对象在存储桶中的唯一标识
-    private final String key = OraxenHostingService.config.getString("tencent-cos.key");
-    // 链接过期时间（分钟）
-    private final Long expireTime = OraxenHostingService.config.getLong("tencent-cos.expire-time");
+    private final String objectKey;
 
-    public TencentCosClient() {
+    public TencentCosStorageProvider(String providerName) {
+        super(OraxenHostingService.config.getLong(providerName + ".expire-time"), providerName);
         // 用户secretId
-        String secretId = OraxenHostingService.config.getString("tencent-cos.secret-id");
+        String secretId = OraxenHostingService.config.getString(providerName + ".secret-id");
         // 用户secretKey
-        String secretKey = OraxenHostingService.config.getString("tencent-cos.secret-key");
+        String secretKey = OraxenHostingService.config.getString(providerName + ".secret-key");
         // bucket的地域
-        String regionName = OraxenHostingService.config.getString("tencent-cos.region-name");
+        String regionName = OraxenHostingService.config.getString(providerName + ".region-name");
+
+        bucketName = OraxenHostingService.config.getString(providerName + ".bucket-name");
+        objectKey = OraxenHostingService.config.getString(providerName + ".object-key");
 
         COSCredentials cred;
         if (secretId != null && secretKey != null) {
@@ -41,21 +44,18 @@ public class TencentCosClient implements Client {
             ClientConfig clientConfig = new ClientConfig(region);
             clientConfig.setHttpProtocol(HttpProtocol.https);
             // 生成 cos 客户端。
-            this.cosClient = new COSClient(cred, clientConfig);
+            this.cosStorageProvider = new COSClient(cred, clientConfig);
         } else {
             OraxenHostingService.logger.error("secretId 或 secretKey 为空");
         }
     }
 
-    /**
-     * 上传文件到COS
-     *
-     * @param localFile  要上传的文件
-     */
+
     @Override
-    public void uploadFile(File localFile) {
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, localFile);
-        PutObjectResult putObjectResult = cosClient.putObject(putObjectRequest);
+    public boolean uploadFile(File localFile) {
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectKey, localFile);
+        PutObjectResult putObjectResult = cosStorageProvider.putObject(putObjectRequest);
+        return putObjectResult.getETag().equals(Utils.getFileMD5(localFile));
     }
 
     /**
@@ -64,10 +64,10 @@ public class TencentCosClient implements Client {
      * @return 直链链接
      */
     @Override
-    public String getFileUrl() {
+    public String generatePresignedUrl() {
         // 设置签名过期时间(可选), 若未进行设置则默认使用 ClientConfig 中的签名过期时间(1小时)
         // 这里设置签名在半个小时后过期
-        Date expirationDate = new Date(System.currentTimeMillis() + expireTime * 60 * 1000);
+        Date expirationDate = new Date(System.currentTimeMillis() + this.getUrlExpireMinutes() * 60 * 1000);
 
         // 填写本次请求的参数，需与实际请求相同，能够防止用户篡改此签名的 HTTP 请求的参数
         Map<String, String> params = new HashMap<>();
@@ -80,7 +80,14 @@ public class TencentCosClient implements Client {
         // 请求的 HTTP 方法，上传请求用 PUT，下载请求用 GET，删除请求用 DELETE
         HttpMethodName method = HttpMethodName.GET;
 
-        URL url = cosClient.generatePresignedUrl(bucketName, key, expirationDate, method, headers, params);
+        URL url = cosStorageProvider.generatePresignedUrl(bucketName, objectKey, expirationDate, method, headers, params);
         return url.toString();
+    }
+
+    @Override
+    public void close() {
+        if (cosStorageProvider != null) {
+            cosStorageProvider.shutdown();
+        }
     }
 }

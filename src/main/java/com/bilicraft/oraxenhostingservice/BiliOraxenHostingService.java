@@ -1,44 +1,112 @@
 package com.bilicraft.oraxenhostingservice;
 
-import com.bilicraft.oraxenhostingservice.client.Client;
-import com.bilicraft.oraxenhostingservice.client.PanClient;
-import com.bilicraft.oraxenhostingservice.client.TencentCosClient;
+import com.bilicraft.oraxenhostingservice.provider.CloudflareR2StorgeProvider;
+import com.bilicraft.oraxenhostingservice.provider.StorageProvider;
+import com.bilicraft.oraxenhostingservice.provider.PanStorageProvider;
+import com.bilicraft.oraxenhostingservice.provider.TencentCosStorageProvider;
 import io.th0rgal.oraxen.pack.upload.hosts.HostingProvider;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 
 public class BiliOraxenHostingService implements HostingProvider {
-    private Client client;
+    private final List<StorageProvider> enabledStorageProvider = new ArrayList<>();
+    // 当前正在使用的 StorageProvider
+    private StorageProvider currProvider;
     private String sha1;
     private UUID packUUID;
 
-
     public BiliOraxenHostingService() {
-        getConfig();
+        loadConfig();
     }
 
-    private void getConfig(){
-        String selectClient = OraxenHostingService.config.getString("client");
-        if (selectClient != null && selectClient.equals("pan")){
-            client = new PanClient();
-        } else if (selectClient != null && selectClient.equals("tencent-cos")){
-            client = new TencentCosClient();
-        } else {
-            OraxenHostingService.logger.error("client配置错误");
+    public List<StorageProvider> getEnabledStorageProvider() {
+        return enabledStorageProvider;
+    }
+
+    /**
+     * 设置指定idx的provider，如果越界，则设置为第一个
+     *
+     * @param idx 要设置的provider的idx
+     * @return 实际设置的idx
+     */
+    public int setProvider(int idx) {
+        if (enabledStorageProvider.isEmpty()) {
+            return -1;
         }
+        // 如果当前为空，使用第一个
+        if (currProvider == null || idx >= enabledStorageProvider.size() || idx < 0) {
+            currProvider = enabledStorageProvider.get(0);
+            return 0;
+        }
+        currProvider = enabledStorageProvider.get(idx);
+        return idx;
+    }
+
+    /**
+     * 加载对象存储配置
+     */
+    public void loadConfig() {
+        for (StorageProvider storageProvider : enabledStorageProvider) {
+            storageProvider.close();
+        }
+        enabledStorageProvider.clear();
+        for (String key : OraxenHostingService.config.getKeys(false)) {
+            if (OraxenHostingService.config.getBoolean(key + ".enable", false)) {
+                switch (key) {
+                    case "123pan":
+                        enabledStorageProvider.add(new PanStorageProvider(key));
+                        break;
+                    case "tencent-cos":
+                        enabledStorageProvider.add(new TencentCosStorageProvider(key));
+                        break;
+                    case "cloud-flare-r2":
+                        enabledStorageProvider.add(new CloudflareR2StorgeProvider(key));
+                        break;
+                    default:
+                        OraxenHostingService.logger.error("未知的配置：{}", key);
+                        continue;
+                }
+                OraxenHostingService.logger.info("成功启用 => {}", key);
+            }
+        }
+        // 获取第一个Provider
+        setProvider(0);
     }
 
     @Override
     public boolean uploadPack(File file) {
-        // 保证重载ohs后，oraxen按照新配置上传
-        getConfig();
-        client.uploadFile(file);
-        sha1 = getFileSHA1(file);
+        if (enabledStorageProvider.isEmpty()) {
+            return false;
+        }
+        // 上传至所有启用的client
+        Iterator<StorageProvider> iterator = enabledStorageProvider.iterator();
+        while (iterator.hasNext()) {
+            StorageProvider provider = iterator.next();
+            Instant start = Instant.now();
+            boolean success;
+            try {
+                success = provider.uploadFile(file);
+            } catch (Exception e) {
+                success = false;
+                OraxenHostingService.logger.error(e.toString());
+            }
+            Instant end = Instant.now();
+            long millis = Duration.between(start, end).toMillis();
+
+            if (success) {
+                OraxenHostingService.logger.info("上传资源包 {} 至 {} 成功，耗时 {} ms",
+                        file.getName(), provider.getProviderName(), millis);
+            } else {
+                OraxenHostingService.logger.error("上传资源包 {} 至 {} 失败，耗时 {} ms",
+                        file.getName(), provider.getProviderName(), millis);
+                OraxenHostingService.logger.error("禁用 {} ", provider.getProviderName());
+                iterator.remove();
+            }
+        }
+        sha1 = Utils.getFileSHA1(file);
         if (sha1 != null) {
             packUUID = UUID.nameUUIDFromBytes(sha1.getBytes());
         } else {
@@ -49,7 +117,25 @@ public class BiliOraxenHostingService implements HostingProvider {
 
     @Override
     public String getPackURL() {
-        return client.getFileUrl();
+        if (currProvider == null) {
+            OraxenHostingService.logger.error("获取资源包url失败，没有指定对象存储服务！");
+            return null;
+        }
+        try {
+            String url = currProvider.getFileUrl();
+            if (url != null && !url.isEmpty()) {
+//                OraxenHostingService.logger.info("get {} pack url => {}", currProvider.getProviderName(), url);
+                return url;
+            }
+        } catch (Exception e) {
+            OraxenHostingService.logger.error("获取资源包url错误", e);
+        }
+        return null;
+    }
+
+    @Override
+    public String getMinecraftPackURL() {
+        return getPackURL();
     }
 
     @Override
@@ -71,34 +157,5 @@ public class BiliOraxenHostingService implements HostingProvider {
     @Override
     public UUID getPackUUID() {
         return packUUID;
-    }
-
-    public static String getFileSHA1(File file) {
-        try {
-            MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
-
-            // 读取文件并更新到 MessageDigest 中
-            FileInputStream fis = new FileInputStream(file);
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                sha1Digest.update(buffer, 0, bytesRead);
-            }
-            fis.close();
-
-            // 计算哈希值
-            byte[] sha1Bytes = sha1Digest.digest();
-
-            // 将字节数组转换为十六进制字符串
-            StringBuilder sb = new StringBuilder();
-            for (byte b : sha1Bytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException | IOException e) {
-            OraxenHostingService.logger.error("计算资源包sha1失败！");
-            OraxenHostingService.logger.error(e.toString());
-            return null;
-        }
     }
 }

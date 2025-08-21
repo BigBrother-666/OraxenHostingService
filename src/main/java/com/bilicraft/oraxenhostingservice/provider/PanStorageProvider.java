@@ -1,6 +1,7 @@
-package com.bilicraft.oraxenhostingservice.client;
+package com.bilicraft.oraxenhostingservice.provider;
 
 import com.bilicraft.oraxenhostingservice.OraxenHostingService;
+import com.bilicraft.oraxenhostingservice.Utils;
 import com.bilicraft.oraxenhostingservice.entity.PanEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,30 +10,49 @@ import com.squareup.okhttp.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.*;
 
-public class PanClient implements Client {
-    private final String clientId = OraxenHostingService.config.getString("pan.client-id");
-    private final String clientSecret = OraxenHostingService.config.getString("pan.client-secret");
-    private final Integer parentFileId = OraxenHostingService.config.getInt("pan.parent-file-id");;
+public class PanStorageProvider extends StorageProvider {
     private Integer fileId = null;
     private String accessToken = null;
 
-    private static final String BASE_URL = OraxenHostingService.config.getString("pan.base-url");
-    private final String ACCESS_TOKEN_URL = BASE_URL + "/api/v1/access_token";
-//    private final String CREATE_DIR_URL = BASE_URL + "/upload/v1/file/mkdir";
-    private final String CREATE_FILE_URL = BASE_URL + "/upload/v1/file/create";
-    private final String GET_UPLOAD_URL = BASE_URL + "/upload/v1/file/get_upload_url";
-    private final String CHECK_COMPLETE_URL = BASE_URL + "/upload/v1/file/upload_complete";
-    private final String GET_FILE_LIST_URL = BASE_URL + "/api/v2/file/list";
-    private final String CHECK_COMPLETE_ASYNC_URL = BASE_URL + "/upload/v1/file/upload_async_result";
-    private final String TRASH_URL = BASE_URL + "/api/v1/file/trash";
-    private final String DELETE_URL = BASE_URL + "/api/v1/file/delete";
-    private final String DIRECT_LINK_URL = BASE_URL + "/api/v1/direct-link/url";
+    private final String clientId;
+    private final String clientSecret;
+    private final Integer parentFileId;
+    private final Integer maxPoolNum;
+
+    private final String ACCESS_TOKEN_URL;
+    private final String CREATE_FILE_URL;
+    private final String GET_UPLOAD_URL;
+    private final String CHECK_COMPLETE_URL;
+    private final String GET_FILE_LIST_URL;
+    private final String CHECK_COMPLETE_ASYNC_URL;
+    private final String TRASH_URL;
+    private final String DELETE_URL;
+    private final String DIRECT_LINK_URL;
 
     private final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     private final MediaType MEDIA_TYPE_OCTET_STREAM = MediaType.parse("application/octet-stream");
+
+    public PanStorageProvider(String providerName) {
+        super(OraxenHostingService.config.getLong(providerName + ".expire-time"), providerName);
+
+        clientId = OraxenHostingService.config.getString(providerName + ".client-id");
+        clientSecret = OraxenHostingService.config.getString(providerName + ".client-secret");
+        parentFileId = OraxenHostingService.config.getInt(providerName + ".parent-file-id");
+        maxPoolNum = OraxenHostingService.config.getInt(providerName + ".upload-time-out");
+
+        String BASE_URL = OraxenHostingService.config.getString(providerName + ".base-url");
+        ACCESS_TOKEN_URL = BASE_URL + "/api/v1/access_token";
+        CREATE_FILE_URL = BASE_URL + "/upload/v1/file/create";
+        GET_UPLOAD_URL = BASE_URL + "/upload/v1/file/get_upload_url";
+        CHECK_COMPLETE_URL = BASE_URL + "/upload/v1/file/upload_complete";
+        GET_FILE_LIST_URL = BASE_URL + "/api/v2/file/list";
+        CHECK_COMPLETE_ASYNC_URL = BASE_URL + "/upload/v1/file/upload_async_result";
+        TRASH_URL = BASE_URL + "/api/v1/file/trash";
+        DELETE_URL = BASE_URL + "/api/v1/file/delete";
+        DIRECT_LINK_URL = BASE_URL + "/api/v1/direct-link/url";
+    }
 
     public void getAccessToken() {
         OkHttpClient client = new OkHttpClient();
@@ -68,7 +88,7 @@ public class PanClient implements Client {
     }
 
     @Override
-    public void uploadFile(File localFile) {
+    public boolean uploadFile(File localFile) {
         if (accessToken == null) {
             getAccessToken();
         }
@@ -87,7 +107,7 @@ public class PanClient implements Client {
             Map<String, Object> jsonObject = new HashMap<>();
             jsonObject.put("parentFileID", parentFileId);
             jsonObject.put("filename", localFile.getName());
-            jsonObject.put("etag", getFileMD5(localFile));
+            jsonObject.put("etag", Utils.getFileMD5(localFile));
             jsonObject.put("size", localFile.length());
             RequestBody body = RequestBody.create(MEDIA_TYPE_JSON, objectMapper.writeValueAsString(jsonObject));
             Request request = new Request.Builder()
@@ -109,6 +129,7 @@ public class PanClient implements Client {
                                 (String) panEntity.data.get("preuploadID"),
                                 (Integer) panEntity.data.get("sliceSize"));
                     }
+                    return true;
                 } else {
                     OraxenHostingService.logger.error("创建资源包失败：{}", panEntity.message);
                 }
@@ -120,10 +141,11 @@ public class PanClient implements Client {
         } catch (IOException e) {
             OraxenHostingService.logger.error("远程创建资源包时发生错误：{}", String.valueOf(e));
         }
+        return false;
     }
 
     @Override
-    public String getFileUrl() {
+    public String generatePresignedUrl() {
         if (accessToken == null) {
             getAccessToken();
         }
@@ -250,32 +272,6 @@ public class PanClient implements Client {
         } catch (IOException e) {
             OraxenHostingService.logger.error("获取云盘资源包信息时发生错误：{}", String.valueOf(e));
         }
-    }
-
-    private String getFileMD5(File file) {
-        try {
-            // 创建MessageDigest实例，用于计算MD5
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            // 读取资源包内容并更新到MessageDigest
-            try (FileInputStream fis = new FileInputStream(file)) {
-                byte[] byteArray = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = fis.read(byteArray)) != -1) {
-                    digest.update(byteArray, 0, bytesRead);
-                }
-            }
-            // 计算哈希值
-            byte[] bytes = digest.digest();
-            // 将字节数组转换为十六进制字符串
-            StringBuilder sb = new StringBuilder();
-            for (byte b : bytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            OraxenHostingService.logger.error("计算资源包md5时发生错误：{}", String.valueOf(e));
-        }
-        return null;
     }
 
     /**
@@ -416,7 +412,7 @@ public class PanClient implements Client {
                     .post(body)
                     .build();
             // 最大轮询次数
-            int maxCnt = OraxenHostingService.config.getInt("pan.upload-time-out");
+            int maxCnt = maxPoolNum;
             while (maxCnt > 0) {
                 Response response = client.newCall(request).execute();
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);

@@ -1,15 +1,18 @@
 package com.bilicraft.oraxenhostingservice;
 
+import com.bilicraft.oraxenhostingservice.listener.PackListener;
+import com.bilicraft.oraxenhostingservice.provider.StorageProvider;
 import com.bilicraft.oraxenhostingservice.command.CommandReload;
+import io.th0rgal.oraxen.OraxenPlugin;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import java.util.Objects;
 
 public final class OraxenHostingService extends JavaPlugin {
     public static FileConfiguration config;
     public static ComponentLogger logger;
+    private PackListener packListener;
 
     @Override
     public void onEnable() {
@@ -23,10 +26,23 @@ public final class OraxenHostingService extends JavaPlugin {
         logger.info("加载配置文件成功！");
         // 注册指令
         Objects.requireNonNull(this.getCommand("reloadconfig")).setExecutor(new CommandReload(this));
+        // 注册监听器
+        regListener();
+    }
+
+    public void regListener() {
+        if (this.packListener != null) {
+            packListener.disableListener();
+        }
+        packListener = new PackListener();
+        this.getServer().getPluginManager().registerEvents(packListener, this);
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        if (OraxenPlugin.get().getUploadManager().getHostingProvider() instanceof BiliOraxenHostingService biliOraxenHostingService) {
+            biliOraxenHostingService.getEnabledStorageProvider().forEach((StorageProvider::close));
+        }
     }
 }
