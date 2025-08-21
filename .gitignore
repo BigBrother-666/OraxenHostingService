@@ -1,4 +1,5 @@
-/SecretKey.csv
+/SecretKey_COS.csv
+/SecretKey_CloudFlare.csv
 /.idea
 /pack.zip
 /target
