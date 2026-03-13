@@ -1,6 +1,6 @@
-package com.bilicraft.oraxenhostingservice.listener;
+package com.bigbrother.resourcepackhostingservice.listener;
 
-import com.bilicraft.oraxenhostingservice.BiliOraxenHostingService;
+import com.bigbrother.resourcepackhostingservice.OraxenHostingService;
 import io.th0rgal.oraxen.OraxenPlugin;
 import io.th0rgal.oraxen.pack.upload.UploadManager;
 import org.bukkit.event.EventHandler;
@@ -25,7 +25,7 @@ public class PackListener implements Listener {
             case INVALID_URL:
             case FAILED_DOWNLOAD:
                 // 重发pack
-                if (uploadManager.getHostingProvider() instanceof BiliOraxenHostingService hostingProvider) {
+                if (uploadManager.getHostingProvider() instanceof OraxenHostingService hostingProvider) {
                     UUID uuid = event.getPlayer().getUniqueId();
                     // 所有provider都尝试过了
                     if (currProviderMap.containsKey(uuid) && currProviderMap.get(uuid) + 1 >= hostingProvider.getEnabledStorageProvider().size()) {

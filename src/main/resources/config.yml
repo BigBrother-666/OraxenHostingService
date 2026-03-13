@@ -1,5 +1,5 @@
-# 使用 /ohs reload重载配置文件
-# 该命令需要权限：ohs.command.reload
+# 使用 /rphs reload重载配置文件
+# 该命令需要权限：rphs.command.reload
 # 重载后，必须重新上传oraxen资源包
 
 # 123云盘

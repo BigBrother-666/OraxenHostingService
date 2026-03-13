@@ -1,8 +1,8 @@
-package com.bilicraft.oraxenhostingservice.provider;
+package com.bigbrother.resourcepackhostingservice.provider;
 
-import com.bilicraft.oraxenhostingservice.OraxenHostingService;
-import com.bilicraft.oraxenhostingservice.Utils;
-import com.bilicraft.oraxenhostingservice.entity.PanEntity;
+import com.bigbrother.resourcepackhostingservice.ResourcePackHostingService;
+import com.bigbrother.resourcepackhostingservice.Utils;
+import com.bigbrother.resourcepackhostingservice.entity.PanEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.*;
@@ -35,14 +35,14 @@ public class PanStorageProvider extends StorageProvider {
     private final MediaType MEDIA_TYPE_OCTET_STREAM = MediaType.parse("application/octet-stream");
 
     public PanStorageProvider(String providerName) {
-        super(OraxenHostingService.config.getLong(providerName + ".expire-time"), providerName);
+        super(ResourcePackHostingService.config.getLong(providerName + ".expire-time"), providerName);
 
-        clientId = OraxenHostingService.config.getString(providerName + ".client-id");
-        clientSecret = OraxenHostingService.config.getString(providerName + ".client-secret");
-        parentFileId = OraxenHostingService.config.getInt(providerName + ".parent-file-id");
-        maxPoolNum = OraxenHostingService.config.getInt(providerName + ".upload-time-out");
+        clientId = ResourcePackHostingService.config.getString(providerName + ".client-id");
+        clientSecret = ResourcePackHostingService.config.getString(providerName + ".client-secret");
+        parentFileId = ResourcePackHostingService.config.getInt(providerName + ".parent-file-id");
+        maxPoolNum = ResourcePackHostingService.config.getInt(providerName + ".upload-time-out");
 
-        String BASE_URL = OraxenHostingService.config.getString(providerName + ".base-url");
+        String BASE_URL = ResourcePackHostingService.config.getString(providerName + ".base-url");
         ACCESS_TOKEN_URL = BASE_URL + "/api/v1/access_token";
         CREATE_FILE_URL = BASE_URL + "/upload/v1/file/create";
         GET_UPLOAD_URL = BASE_URL + "/upload/v1/file/get_upload_url";
@@ -74,16 +74,16 @@ public class PanStorageProvider extends StorageProvider {
             if (response.isSuccessful()) {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code != 0) {
-                    OraxenHostingService.logger.error("获取AccessToken失败：{}", panEntity.message);
+                    ResourcePackHostingService.logger.error("获取AccessToken失败：{}", panEntity.message);
                 }
                 accessToken = (String) panEntity.data.get("accessToken");
             } else {
-                OraxenHostingService.logger.error("{}请求失败：{}", ACCESS_TOKEN_URL, response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", ACCESS_TOKEN_URL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.error("获取AccessToken时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("获取AccessToken时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -121,7 +121,7 @@ public class PanStorageProvider extends StorageProvider {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code == 0) {
                     if ((Boolean) panEntity.data.get("reuse")) {
-                        OraxenHostingService.logger.info("资源包秒传成功");
+                        ResourcePackHostingService.logger.info("资源包秒传成功");
                         fileId = (Integer) panEntity.data.get("fileID");
                     } else {
                         // 分块上传
@@ -131,15 +131,15 @@ public class PanStorageProvider extends StorageProvider {
                     }
                     return true;
                 } else {
-                    OraxenHostingService.logger.error("创建资源包失败：{}", panEntity.message);
+                    ResourcePackHostingService.logger.error("创建资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.error("{}请求失败：{}", CREATE_FILE_URL, response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", CREATE_FILE_URL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.error("远程创建资源包时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("远程创建资源包时发生错误：{}", String.valueOf(e));
         }
         return false;
     }
@@ -166,15 +166,15 @@ public class PanStorageProvider extends StorageProvider {
                 if (panEntity.code == 0) {
                     return (String) panEntity.data.get("url");
                 } else {
-                    OraxenHostingService.logger.error("获取直链失败：{}", panEntity.message);
+                    ResourcePackHostingService.logger.error("获取直链失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.error("{}请求失败：{}", urlBuilder.build(), response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", urlBuilder.build(), response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.error("获取直链时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("获取直链时发生错误：{}", String.valueOf(e));
         }
         return null;
     }
@@ -200,10 +200,10 @@ public class PanStorageProvider extends StorageProvider {
             if (response.isSuccessful()) {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code != 0) {
-                    OraxenHostingService.logger.error("删除旧资源包失败：{}", panEntity.message);
+                    ResourcePackHostingService.logger.error("删除旧资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.error("{}请求失败：{}", TRASH_URL, response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", TRASH_URL, response.code());
             }
             // 彻底删除
             request = new Request.Builder()
@@ -216,17 +216,17 @@ public class PanStorageProvider extends StorageProvider {
             if (response.isSuccessful()) {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code == 0) {
-                    OraxenHostingService.logger.info("删除旧资源包成功");
+                    ResourcePackHostingService.logger.info("删除旧资源包成功");
                 } else {
-                    OraxenHostingService.logger.error("删除旧资源包失败：{}", panEntity.message);
+                    ResourcePackHostingService.logger.error("删除旧资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.error("{}请求失败：{}", DELETE_URL, response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", DELETE_URL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.error("删除文件时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("删除文件时发生错误：{}", String.valueOf(e));
         }
 
 
@@ -262,15 +262,15 @@ public class PanStorageProvider extends StorageProvider {
                         }
                     }
                 } else {
-                    OraxenHostingService.logger.error("查询远程资源包失败：{}", panEntity.message);
+                    ResourcePackHostingService.logger.error("查询远程资源包失败：{}", panEntity.message);
                 }
             } else {
-                OraxenHostingService.logger.error("{}请求失败：{}", urlBuilder.build(), response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", urlBuilder.build(), response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.error("获取云盘资源包信息时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("获取云盘资源包信息时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -303,7 +303,7 @@ public class PanStorageProvider extends StorageProvider {
             // 检查上传是否完成
             checkUploadSuccess(preuploadID);
         } catch (IOException e) {
-            OraxenHostingService.logger.error("资源包分片时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("资源包分片时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -332,7 +332,7 @@ public class PanStorageProvider extends StorageProvider {
                     .build();
             Response response = client.newCall(request).execute();
             if (!response.isSuccessful()) {
-                OraxenHostingService.logger.error("{}请求失败：{}", GET_UPLOAD_URL, response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", GET_UPLOAD_URL, response.code());
                 return;
             }
             PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
@@ -347,12 +347,12 @@ public class PanStorageProvider extends StorageProvider {
                     .build();
             response = client.newCall(request).execute();
             if (!response.isSuccessful()) {
-                OraxenHostingService.logger.error("{}请求失败：{}", presignedURL, response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", presignedURL, response.code());
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.error("分片上传资源包时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("分片上传资源包时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -378,22 +378,22 @@ public class PanStorageProvider extends StorageProvider {
             Response response = client.newCall(request).execute();
             PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
             if (!response.isSuccessful()) {
-                OraxenHostingService.logger.error("{}请求失败：{}", CHECK_COMPLETE_URL, response.code());
+                ResourcePackHostingService.logger.error("{}请求失败：{}", CHECK_COMPLETE_URL, response.code());
             } else if (panEntity.code == 0) {
                 if ((Boolean) panEntity.data.get("completed")) {
                     fileId = (Integer) panEntity.data.get("fileID");
-                    OraxenHostingService.logger.info("成功上传资源包到云盘");
+                    ResourcePackHostingService.logger.info("成功上传资源包到云盘");
                 } else {
                     // 资源包还未上传完成，需要异步查询
                     checkUploadSuccessAsync(preuploadID);
                 }
             } else {
-                OraxenHostingService.logger.error("分片上传资源包失败：{}", panEntity.message);
+                ResourcePackHostingService.logger.error("分片上传资源包失败：{}", panEntity.message);
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException e) {
-            OraxenHostingService.logger.error("检查上传结果时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("检查上传结果时发生错误：{}", String.valueOf(e));
         }
     }
 
@@ -418,7 +418,7 @@ public class PanStorageProvider extends StorageProvider {
                 PanEntity panEntity = objectMapper.readValue(response.body().string(), PanEntity.class);
                 if (panEntity.code == 0 && (Boolean) panEntity.data.get("completed")) {
                     fileId = (Integer) panEntity.data.get("fileID");
-                    OraxenHostingService.logger.info("成功上传资源包到云盘");
+                    ResourcePackHostingService.logger.info("成功上传资源包到云盘");
                     break;
                 } else {
                     // 资源包还未上传完成，继续轮询
@@ -427,12 +427,12 @@ public class PanStorageProvider extends StorageProvider {
                 maxCnt--;
             }
             if (maxCnt == 0) {
-                OraxenHostingService.logger.warn("上传资源包超时");
+                ResourcePackHostingService.logger.warn("上传资源包超时");
             }
         } catch (JsonProcessingException e) {
-            OraxenHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("解析json时出错：{}", String.valueOf(e));
         } catch (IOException | InterruptedException e) {
-            OraxenHostingService.logger.error("异步检查上传结果时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("异步检查上传结果时发生错误：{}", String.valueOf(e));
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.bilicraft.oraxenhostingservice.entity;
+package com.bigbrother.resourcepackhostingservice.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

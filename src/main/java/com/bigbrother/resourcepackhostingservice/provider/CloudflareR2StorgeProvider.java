@@ -1,6 +1,6 @@
-package com.bilicraft.oraxenhostingservice.provider;
+package com.bigbrother.resourcepackhostingservice.provider;
 
-import com.bilicraft.oraxenhostingservice.OraxenHostingService;
+import com.bigbrother.resourcepackhostingservice.ResourcePackHostingService;
 
 import java.io.File;
 import java.time.Duration;
@@ -13,16 +13,16 @@ public class CloudflareR2StorgeProvider extends StorageProvider {
     private final String objectKey;
 
     public CloudflareR2StorgeProvider(String providerName) {
-        super(OraxenHostingService.config.getLong(providerName + ".expire-time"), providerName);
+        super(ResourcePackHostingService.config.getLong(providerName + ".expire-time"), providerName);
 
         // 加载配置
-        bucketName = OraxenHostingService.config.getString(providerName + ".bucket-name");
-        objectKey = OraxenHostingService.config.getString(providerName + ".object-key");
+        bucketName = ResourcePackHostingService.config.getString(providerName + ".bucket-name");
+        objectKey = ResourcePackHostingService.config.getString(providerName + ".object-key");
 
         CloudflareR2Client.S3Config config = new CloudflareR2Client.S3Config(
-                OraxenHostingService.config.getString(providerName + ".account-id"),
-                OraxenHostingService.config.getString(providerName + ".access-key"),
-                OraxenHostingService.config.getString(providerName + ".secret-key")
+                ResourcePackHostingService.config.getString(providerName + ".account-id"),
+                ResourcePackHostingService.config.getString(providerName + ".access-key"),
+                ResourcePackHostingService.config.getString(providerName + ".secret-key")
         );
         this.r2Client = new CloudflareR2Client(config);
     }

@@ -1,4 +1,4 @@
-package com.bilicraft.oraxenhostingservice.provider;
+package com.bigbrother.resourcepackhostingservice.provider;
 
 import java.io.File;
 

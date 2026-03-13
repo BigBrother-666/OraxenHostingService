@@ -1,4 +1,4 @@
-package com.bilicraft.oraxenhostingservice;
+package com.bigbrother.resourcepackhostingservice;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,7 +28,7 @@ public class Utils {
             }
             return sb.toString();
         } catch (Exception e) {
-            OraxenHostingService.logger.error("计算资源包md5时发生错误：{}", String.valueOf(e));
+            ResourcePackHostingService.logger.error("计算资源包md5时发生错误：{}", String.valueOf(e));
         }
         return null;
     }
@@ -56,8 +56,8 @@ public class Utils {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException | IOException e) {
-            OraxenHostingService.logger.error("计算资源包sha1失败！");
-            OraxenHostingService.logger.error(e.toString());
+            ResourcePackHostingService.logger.error("计算资源包sha1失败！");
+            ResourcePackHostingService.logger.error(e.toString());
             return null;
         }
     }

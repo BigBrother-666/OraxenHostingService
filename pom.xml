@@ -4,12 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.bilicraft</groupId>
-    <artifactId>OraxenHostingService</artifactId>
+    <groupId>com.bigbrother</groupId>
+    <artifactId>ResourcePackHostingService</artifactId>
     <version>1.1.0</version>
     <packaging>jar</packaging>
 
-    <name>OraxenHostingService</name>
+    <name>ResourcePackHostingService</name>
 
     <properties>
         <java.version>1.8</java.version>
@@ -166,12 +166,14 @@
             <groupId>com.qcloud</groupId>
             <artifactId>cos_api</artifactId>
             <version>5.6.229</version>
+            <scope>provided</scope>
         </dependency>
         <!--        CloudFlare R2-->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
             <version>2.26.21</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

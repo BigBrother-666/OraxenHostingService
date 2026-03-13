@@ -1,7 +1,7 @@
-package com.bilicraft.oraxenhostingservice.provider;
+package com.bigbrother.resourcepackhostingservice.provider;
 
-import com.bilicraft.oraxenhostingservice.OraxenHostingService;
-import com.bilicraft.oraxenhostingservice.Utils;
+import com.bigbrother.resourcepackhostingservice.ResourcePackHostingService;
+import com.bigbrother.resourcepackhostingservice.Utils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.auth.BasicCOSCredentials;
@@ -26,16 +26,16 @@ public class TencentCosStorageProvider extends StorageProvider {
     private final String objectKey;
 
     public TencentCosStorageProvider(String providerName) {
-        super(OraxenHostingService.config.getLong(providerName + ".expire-time"), providerName);
+        super(ResourcePackHostingService.config.getLong(providerName + ".expire-time"), providerName);
         // 用户secretId
-        String secretId = OraxenHostingService.config.getString(providerName + ".secret-id");
+        String secretId = ResourcePackHostingService.config.getString(providerName + ".secret-id");
         // 用户secretKey
-        String secretKey = OraxenHostingService.config.getString(providerName + ".secret-key");
+        String secretKey = ResourcePackHostingService.config.getString(providerName + ".secret-key");
         // bucket的地域
-        String regionName = OraxenHostingService.config.getString(providerName + ".region-name");
+        String regionName = ResourcePackHostingService.config.getString(providerName + ".region-name");
 
-        bucketName = OraxenHostingService.config.getString(providerName + ".bucket-name");
-        objectKey = OraxenHostingService.config.getString(providerName + ".object-key");
+        bucketName = ResourcePackHostingService.config.getString(providerName + ".bucket-name");
+        objectKey = ResourcePackHostingService.config.getString(providerName + ".object-key");
 
         COSCredentials cred;
         if (secretId != null && secretKey != null) {
@@ -46,7 +46,7 @@ public class TencentCosStorageProvider extends StorageProvider {
             // 生成 cos 客户端。
             this.cosStorageProvider = new COSClient(cred, clientConfig);
         } else {
-            OraxenHostingService.logger.error("secretId 或 secretKey 为空");
+            ResourcePackHostingService.logger.error("secretId 或 secretKey 为空");
         }
     }
 

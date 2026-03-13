@@ -1,15 +1,15 @@
-package com.bilicraft.oraxenhostingservice;
+package com.bigbrother.resourcepackhostingservice;
 
-import com.bilicraft.oraxenhostingservice.listener.PackListener;
-import com.bilicraft.oraxenhostingservice.provider.StorageProvider;
-import com.bilicraft.oraxenhostingservice.command.CommandReload;
+import com.bigbrother.resourcepackhostingservice.listener.PackListener;
+import com.bigbrother.resourcepackhostingservice.provider.StorageProvider;
+import com.bigbrother.resourcepackhostingservice.command.CommandReload;
 import io.th0rgal.oraxen.OraxenPlugin;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Objects;
 
-public final class OraxenHostingService extends JavaPlugin {
+public final class ResourcePackHostingService extends JavaPlugin {
     public static FileConfiguration config;
     public static ComponentLogger logger;
     private PackListener packListener;
@@ -41,7 +41,7 @@ public final class OraxenHostingService extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        if (OraxenPlugin.get().getUploadManager().getHostingProvider() instanceof BiliOraxenHostingService biliOraxenHostingService) {
+        if (OraxenPlugin.get().getUploadManager().getHostingProvider() instanceof OraxenHostingService biliOraxenHostingService) {
             biliOraxenHostingService.getEnabledStorageProvider().forEach((StorageProvider::close));
         }
     }

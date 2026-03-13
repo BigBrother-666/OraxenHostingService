@@ -1,4 +1,4 @@
-package com.bilicraft.oraxenhostingservice.provider;
+package com.bigbrother.resourcepackhostingservice.provider;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;

@@ -1,9 +1,9 @@
-package com.bilicraft.oraxenhostingservice;
+package com.bigbrother.resourcepackhostingservice;
 
-import com.bilicraft.oraxenhostingservice.provider.CloudflareR2StorgeProvider;
-import com.bilicraft.oraxenhostingservice.provider.StorageProvider;
-import com.bilicraft.oraxenhostingservice.provider.PanStorageProvider;
-import com.bilicraft.oraxenhostingservice.provider.TencentCosStorageProvider;
+import com.bigbrother.resourcepackhostingservice.provider.CloudflareR2StorgeProvider;
+import com.bigbrother.resourcepackhostingservice.provider.StorageProvider;
+import com.bigbrother.resourcepackhostingservice.provider.PanStorageProvider;
+import com.bigbrother.resourcepackhostingservice.provider.TencentCosStorageProvider;
 import io.th0rgal.oraxen.pack.upload.hosts.HostingProvider;
 
 import java.io.File;
@@ -11,14 +11,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-public class BiliOraxenHostingService implements HostingProvider {
+public class OraxenHostingService implements HostingProvider {
     private final List<StorageProvider> enabledStorageProvider = new ArrayList<>();
     // 当前正在使用的 StorageProvider
     private StorageProvider currProvider;
     private String sha1;
     private UUID packUUID;
 
-    public BiliOraxenHostingService() {
+    public OraxenHostingService() {
         loadConfig();
     }
 
@@ -53,8 +53,8 @@ public class BiliOraxenHostingService implements HostingProvider {
             storageProvider.close();
         }
         enabledStorageProvider.clear();
-        for (String key : OraxenHostingService.config.getKeys(false)) {
-            if (OraxenHostingService.config.getBoolean(key + ".enable", false)) {
+        for (String key : ResourcePackHostingService.config.getKeys(false)) {
+            if (ResourcePackHostingService.config.getBoolean(key + ".enable", false)) {
                 switch (key) {
                     case "123pan":
                         enabledStorageProvider.add(new PanStorageProvider(key));
@@ -66,10 +66,10 @@ public class BiliOraxenHostingService implements HostingProvider {
                         enabledStorageProvider.add(new CloudflareR2StorgeProvider(key));
                         break;
                     default:
-                        OraxenHostingService.logger.error("未知的配置：{}", key);
+                        ResourcePackHostingService.logger.error("未知的配置：{}", key);
                         continue;
                 }
-                OraxenHostingService.logger.info("成功启用 => {}", key);
+                ResourcePackHostingService.logger.info("成功启用 => {}", key);
             }
         }
         // 获取第一个Provider
@@ -91,18 +91,18 @@ public class BiliOraxenHostingService implements HostingProvider {
                 success = provider.uploadFile(file);
             } catch (Exception e) {
                 success = false;
-                OraxenHostingService.logger.error(e.toString());
+                ResourcePackHostingService.logger.error(e.toString());
             }
             Instant end = Instant.now();
             long millis = Duration.between(start, end).toMillis();
 
             if (success) {
-                OraxenHostingService.logger.info("上传资源包 {} 至 {} 成功，耗时 {} ms",
+                ResourcePackHostingService.logger.info("上传资源包 {} 至 {} 成功，耗时 {} ms",
                         file.getName(), provider.getProviderName(), millis);
             } else {
-                OraxenHostingService.logger.error("上传资源包 {} 至 {} 失败，耗时 {} ms",
+                ResourcePackHostingService.logger.error("上传资源包 {} 至 {} 失败，耗时 {} ms",
                         file.getName(), provider.getProviderName(), millis);
-                OraxenHostingService.logger.error("禁用 {} ", provider.getProviderName());
+                ResourcePackHostingService.logger.error("禁用 {} ", provider.getProviderName());
                 iterator.remove();
             }
         }
@@ -118,7 +118,7 @@ public class BiliOraxenHostingService implements HostingProvider {
     @Override
     public String getPackURL() {
         if (currProvider == null) {
-            OraxenHostingService.logger.error("获取资源包url失败，没有指定对象存储服务！");
+            ResourcePackHostingService.logger.error("获取资源包url失败，没有指定对象存储服务！");
             return null;
         }
         try {
@@ -128,7 +128,7 @@ public class BiliOraxenHostingService implements HostingProvider {
                 return url;
             }
         } catch (Exception e) {
-            OraxenHostingService.logger.error("获取资源包url错误", e);
+            ResourcePackHostingService.logger.error("获取资源包url错误", e);
         }
         return null;
     }
