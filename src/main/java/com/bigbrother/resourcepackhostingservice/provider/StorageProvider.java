@@ -33,8 +33,16 @@ public abstract class StorageProvider {
      * 在 urlExpireMinutes 内返回同一个 URL，过期后刷新。
      */
     public synchronized String getFileUrl() {
+        // 永不过期
+        if (urlExpireMinutes <= 0) {
+            if (cachedUrl == null) {
+                cachedUrl = generatePresignedUrl();
+            }
+            return cachedUrl;
+        }
+
         long now = System.currentTimeMillis();
-        if (urlExpireMinutes < 0 || cachedUrl == null || now >= expireAt) {
+        if (cachedUrl == null || now >= expireAt) {
             cachedUrl = generatePresignedUrl();
             expireAt = now + urlExpireMinutes * 60 * 1000;
         }
