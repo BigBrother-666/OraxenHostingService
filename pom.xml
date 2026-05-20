@@ -59,7 +59,7 @@
                 <executions>
                     <execution>
                         <id>copy-jar</id>
-                        <phase>package</phase>
+                        <phase>install</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
@@ -106,13 +106,13 @@
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
-            <version>1.20.4-R0.1-SNAPSHOT</version>
+            <version>1.21.11-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.th0rgal</groupId>
             <artifactId>oraxen</artifactId>
-            <version>1.173.0</version>
+            <version>1.213.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>me.gabytm.util</groupId>

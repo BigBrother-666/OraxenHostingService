@@ -134,11 +134,6 @@ public class OraxenHostingService implements HostingProvider {
     }
 
     @Override
-    public String getMinecraftPackURL() {
-        return getPackURL();
-    }
-
-    @Override
     public byte[] getSHA1() {
         int len = this.sha1.length();
         byte[] data = new byte[len / 2];
