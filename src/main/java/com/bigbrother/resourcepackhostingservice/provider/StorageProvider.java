@@ -6,7 +6,7 @@ public abstract class StorageProvider {
 
     private final String providerName;
     private String cachedUrl;
-    private long expireAt;
+    private long refreshAt;
     private final long urlExpireMinutes;
 
     public long getUrlExpireMinutes() {
@@ -33,7 +33,6 @@ public abstract class StorageProvider {
      * 在 urlExpireMinutes 内返回同一个 URL，过期后刷新。
      */
     public synchronized String getFileUrl() {
-        // 永不过期
         if (urlExpireMinutes <= 0) {
             if (cachedUrl == null) {
                 cachedUrl = generatePresignedUrl();
@@ -42,10 +41,13 @@ public abstract class StorageProvider {
         }
 
         long now = System.currentTimeMillis();
-        if (cachedUrl == null || now >= expireAt) {
+
+        if (cachedUrl == null || now >= refreshAt) {
             cachedUrl = generatePresignedUrl();
-            expireAt = now + urlExpireMinutes * 60 * 1000;
+            long ttl = urlExpireMinutes * 60 * 1000;
+            refreshAt = now + ttl * 9 / 10;
         }
+
         return cachedUrl;
     }
 

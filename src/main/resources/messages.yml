@@ -1,0 +1,2 @@
+detect-pack-fail: "<yellow>检测到资源包下载/加载失败，请手动下载安装资源包"
+download-pack-button: "<green><underlined><click:open_url:%s>[点击下载最新资源包]"
