@@ -46,6 +46,7 @@ public final class ResourcePackHostingService extends JavaPlugin {
 
     public void reload() {
         // 加载配置
+        this.reloadConfig();
         config = this.getConfig();
         messages = YamlConfiguration.loadConfiguration(new File(this.getDataFolder(), "messages.yml"));
         UploadManager uploadManager = OraxenPlugin.get().getUploadManager();
